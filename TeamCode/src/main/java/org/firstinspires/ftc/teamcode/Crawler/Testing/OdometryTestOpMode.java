@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.Crawler.Localization.Localizer;
 public class OdometryTestOpMode extends LinearOpMode {
     private Localizer localizer;
     private DcMotor leftMotor, rightMotor, strafeMotor;
+    private org.firstinspires.ftc.teamcode.Crawler.Hardware.Robot robot = new org.firstinspires.ftc.teamcode.Crawler.Hardware.Robot();
     private ElapsedTime timer = new ElapsedTime();
 
     private static final double MOTOR_POWER = 0.3;
@@ -17,10 +18,12 @@ public class OdometryTestOpMode extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        // Drive Motors
-        leftMotor = hardwareMap.get(DcMotor.class, "leftMotor");
-        rightMotor = hardwareMap.get(DcMotor.class, "rightMotor");
-        strafeMotor = hardwareMap.get(DcMotor.class, "strafeMotor");
+        // Initialize robot hardware (drive motors and dead-wheel encoders)
+        robot.init(hardwareMap);
+        // Map test motor handles to the robot's drive motors
+        leftMotor = robot.frontLeft;
+        rightMotor = robot.backLeft;
+        strafeMotor = robot.frontRight;
 
         localizer = new Localizer(hardwareMap);
 

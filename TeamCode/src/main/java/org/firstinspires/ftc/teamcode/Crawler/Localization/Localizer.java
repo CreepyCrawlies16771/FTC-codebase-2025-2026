@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.Crawler.Localization;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.Crawler.Hardware.Robot;
+
 public class Localizer {
     public double x = 0;
     public double y = 0;
@@ -16,11 +18,15 @@ public class Localizer {
     public static double TRACK_WIDTH = 304.8;
     public static double CENTER_OFFSET = -101.6;
 
+    Robot robot = new Robot();
+
     public Localizer(HardwareMap hwMap) {
-        // Ensure these names match your Hardware Configuration on the Driver Station
-        leftEncoder = hwMap.get(DcMotor.class, "frontLeft");
-        rightEncoder = hwMap.get(DcMotor.class, "backLeft");
-        centerEncoder = hwMap.get(DcMotor.class, "frontRight");
+        // Ensure these names match your Robot configuration (dead-wheel encoders)
+        // These should be separate from your drive motor names and configured in `Robot.init`
+        robot.init(hwMap);
+        leftEncoder = robot.leftEncoder;
+        rightEncoder = robot.rightEncoder;
+        centerEncoder = robot.centerEncoder;
 
         resetPose(0, 0, 0);
     }
