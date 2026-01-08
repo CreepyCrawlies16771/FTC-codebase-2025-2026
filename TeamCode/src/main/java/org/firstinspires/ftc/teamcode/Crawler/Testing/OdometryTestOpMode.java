@@ -4,13 +4,15 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.Crawler.Hardware.Robot;
 import org.firstinspires.ftc.teamcode.Crawler.Localization.Localizer;
 
 @Autonomous(name = "Odometry Test", group = "Crawler")
 public class OdometryTestOpMode extends LinearOpMode {
     private Localizer localizer;
-    private DcMotor leftMotor, rightMotor, strafeMotor;
-    private org.firstinspires.ftc.teamcode.Crawler.Hardware.Robot robot = new org.firstinspires.ftc.teamcode.Crawler.Hardware.Robot();
+
+    private Robot robot = new Robot();
     private ElapsedTime timer = new ElapsedTime();
 
     private static final double MOTOR_POWER = 0.3;
@@ -21,9 +23,6 @@ public class OdometryTestOpMode extends LinearOpMode {
         // Initialize robot hardware (drive motors and dead-wheel encoders)
         robot.init(hardwareMap);
         // Map test motor handles to the robot's drive motors
-        leftMotor = robot.frontLeft;
-        rightMotor = robot.backLeft;
-        strafeMotor = robot.frontRight;
 
         localizer = new Localizer(hardwareMap);
 
@@ -50,8 +49,7 @@ public class OdometryTestOpMode extends LinearOpMode {
         localizer.resetPose(0, 0, 0);
         timer.reset();
 
-        leftMotor.setPower(MOTOR_POWER);
-        rightMotor.setPower(MOTOR_POWER);
+        robot.powerDriveTrain(MOTOR_POWER, MOTOR_POWER, MOTOR_POWER, MOTOR_POWER);
 
         while (opModeIsActive() && timer.seconds() < 10) {
             localizer.update();
@@ -73,8 +71,7 @@ public class OdometryTestOpMode extends LinearOpMode {
         timer.reset();
 
         // Turn in place
-        leftMotor.setPower(-MOTOR_POWER);
-        rightMotor.setPower(MOTOR_POWER);
+        robot.powerDriveTrain(MOTOR_POWER, -MOTOR_POWER, MOTOR_POWER, -MOTOR_POWER);
 
         while (opModeIsActive() && timer.seconds() < 10) {
             localizer.update();
@@ -93,7 +90,7 @@ public class OdometryTestOpMode extends LinearOpMode {
         localizer.resetPose(0, 0, 0);
         timer.reset();
 
-        strafeMotor.setPower(MOTOR_POWER);
+        robot.powerDriveTrain(MOTOR_POWER, -MOTOR_POWER, -MOTOR_POWER, MOTOR_POWER);
 
         while (opModeIsActive() && timer.seconds() < 10) {
             localizer.update();
@@ -110,8 +107,6 @@ public class OdometryTestOpMode extends LinearOpMode {
     }
 
     private void stopMotors() {
-        leftMotor.setPower(0);
-        rightMotor.setPower(0);
-        strafeMotor.setPower(0);
+        robot.powerDriveTrain(0, 0, 0, 0);
     }
 }

@@ -18,7 +18,9 @@ public class Robot {
         backRight = hwMap.get(DcMotor.class, "backRight");
 
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         leftShooter = hwMap.get(DcMotor.class, "leftShoot");
         rightShooter = hwMap.get(DcMotor.class, "rightShoot");
@@ -31,6 +33,8 @@ public class Robot {
         leftEncoder = hwMap.get(DcMotor.class, "frontLeft");
         rightEncoder = hwMap.get(DcMotor.class, "backLeft");
         centerEncoder = hwMap.get(DcMotor.class, "frontRight");
+
+        leftEncoder.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
     public void powerDriveTrain(double fl, double fr, double bl, double br) {
