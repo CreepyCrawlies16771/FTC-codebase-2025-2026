@@ -8,6 +8,6 @@ import org.firstinspires.ftc.teamcode.AutoEninge.AutoEngine;
 public class AutoTest extends AutoEngine {
     @Override
     public void runPath() {
-        drivePID(2,0);
+        drivePID(0.25,0);
     }
 }

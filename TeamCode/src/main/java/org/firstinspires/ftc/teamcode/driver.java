@@ -67,9 +67,9 @@ public class driver extends OpMode{
         }
 
         void powerDriveTrain(double frontLeftPower, double frontRightPower, double backLeftPower, double backRightPower) {
-            frontLeft.setPower(frontLeftPower);
+            frontLeft.setPower(-frontLeftPower);
             frontRight.setPower(frontRightPower);
-            backLeft.setPower(backLeftPower);
+            backLeft.setPower(-backLeftPower);
             backRight.setPower(backRightPower);
         }
 

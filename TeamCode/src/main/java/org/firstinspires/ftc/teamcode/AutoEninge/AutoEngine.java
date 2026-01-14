@@ -22,11 +22,11 @@ public abstract class AutoEngine extends LinearOpMode {
 
 
     // PID Coefficients
-    protected double Kp = 0.8;//1.2  // Power: how fast it moves toward target
-    protected double Kd = 0.3;//0.05; // Dampening: prevents shaking/overshoot
-    protected double Ki = 0.01;//0.01; // Integral: handles friction at the very end
+    protected double Kp = 0.3;  // Power: how fast it moves toward target
+    protected double Kd = 0; // Dampening: prevents shaking/overshoot
+    protected double Ki = 0; // Integral: handles friction at the very end
 
-    protected final double STEER_P = 0.03; // How aggressively it fixes its angle
+    protected final double STEER_P = 0.02; // How aggressively it fixes its angle
     protected final double MIN_POWER = 0.1; // Minimum power to overcome friction
 
     // --- HARDWARE ---
@@ -84,6 +84,9 @@ public abstract class AutoEngine extends LinearOpMode {
 
         while (opModeIsActive() && Math.abs(error) > 50) {
             double currentPos = (leftOdo.getCurrentPosition() + rightOdo.getCurrentPosition()) / 2.0;
+
+            currentPos = currentPos * -1; // quick fix if the odometry pods are mounted backwards
+
             error = targetTicks - currentPos;
 
             // PID Logic
@@ -108,6 +111,12 @@ public abstract class AutoEngine extends LinearOpMode {
 
             applyDrivePower(power, steer);
             lastError = error;
+
+            telemetry.addData("Target Ticks", targetTicks);
+            telemetry.addData("Current Pos", currentPos);
+            telemetry.addData("Error", error);
+            telemetry.update();
+
         }
         stopRobot();
     }
@@ -171,9 +180,9 @@ public abstract class AutoEngine extends LinearOpMode {
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.FORWARD);
         frontLeft.setDirection(DcMotor.Direction.FORWARD);
-        backRight.setDirection(DcMotor.Direction.FORWARD);
+        backRight.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection(DcMotor.Direction.REVERSE);
     }
 
