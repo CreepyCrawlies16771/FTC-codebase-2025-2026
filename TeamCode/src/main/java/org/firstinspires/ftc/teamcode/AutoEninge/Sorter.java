@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.AutoEninge;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+@Deprecated
 public class Sorter {
 
     int tries = 3;

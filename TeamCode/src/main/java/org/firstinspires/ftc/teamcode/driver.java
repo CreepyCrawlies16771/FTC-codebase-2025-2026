@@ -5,17 +5,12 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+import org.firstinspires.ftc.teamcode.AutoEninge.Robot;
+import org.opencv.core.Mat;
+
 @TeleOp(name="Use ME! Driver")
 public class driver extends OpMode{
 
-        DcMotor frontRight;
-        DcMotor backRight;
-        DcMotor frontLeft;
-        DcMotor backLeft;
-        DcMotor leftShooter;
-        DcMotor rightShooter;
-
-        DcMotor gobbler;
 
         double frontLeftPower;
         double frontRightPower;
@@ -26,22 +21,13 @@ public class driver extends OpMode{
         boolean shootOn = false;
         boolean gobbleOn = false;
 
+        boolean shootSequenceOn = false;
+
+        Robot robot;
+
         @Override
         public void init() {
-            frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-            backRight = hardwareMap.get(DcMotor.class, "backRight");
-            frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-            backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-
-            leftShooter = hardwareMap.get(DcMotor.class, "leftShoot");
-            rightShooter = hardwareMap.get(DcMotor.class, "rightShoot");
-
-            gobbler = hardwareMap.get(DcMotor.class, "gobbler");
-
-            leftShooter.setDirection(DcMotorSimple.Direction.REVERSE);
-            rightShooter.setDirection(DcMotorSimple.Direction.FORWARD);
-
-            gobbler.setDirection(DcMotorSimple.Direction.REVERSE);
+            robot = new Robot(hardwareMap);
         }
 
         @Override
@@ -56,39 +42,37 @@ public class driver extends OpMode{
             backLeftPower = leftY - leftX;
             backRightPower = rightY + rightX;
 
-            powerDriveTrain(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
+            robot.powerDriveTrain(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
 
-            shootOn = gamepad2.right_bumper && !shootOn;
-            activateShooter(shootOn);
+            double forwards = gamepad1.left_stick_y;
+            double strafe = gamepad1.left_stick_x;
+            double rotate = gamepad1.right_stick_x;
+
+//            robot.drive(forwards, strafe, rotate);
+            shootOn = gamepad2.right_bumper;
+            robot.activateShooters(!shootOn);
 
             gobbleOn = gamepad2.left_bumper && !gobbleOn;
-            activateGobbler(gobbleOn);
+            robot.activateGobbler(gobbleOn);
 
-        }
-
-        void powerDriveTrain(double frontLeftPower, double frontRightPower, double backLeftPower, double backRightPower) {
-            frontLeft.setPower(-frontLeftPower);
-            frontRight.setPower(frontRightPower);
-            backLeft.setPower(-backLeftPower);
-            backRight.setPower(backRightPower);
-        }
-
-        void activateShooter(boolean shoot) {
-            if (shoot) {
-                leftShooter.setPower(1);
-                rightShooter.setPower(1);
-            } else {
-                leftShooter.setPower(0);
-                rightShooter.setPower(0);
+            shootSequenceOn = gamepad2.triangle;
+            if(shootSequenceOn){
+                try {
+                    frontLeftPower = 0;
+                    frontRightPower = 0;
+                    backLeftPower = 0;
+                    backRightPower = 0;
+                    robot.shootSequence();
+                    shootSequenceOn = false;
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
+
+
+
         }
 
-        void activateGobbler(boolean gooble) {
-            if (gooble) {
-                gobbler.setPower(1);
-            } else {
-                gobbler.setPower(0);
-            }
-        }
+
     }
 

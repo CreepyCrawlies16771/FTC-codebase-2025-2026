@@ -1,9 +1,10 @@
 package org.firstinspires.ftc.teamcode.AutoEninge;
 
+import android.annotation.SuppressLint;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -13,28 +14,30 @@ public abstract class AutoEngine extends LinearOpMode {
     // Calculate: (Ticks per rotation of encoder) / (Circumference of deadwheel)
     // --- ODOMETRY HARDWARE CONSTANTS ---
 // goBILDA 48mm Pod: https://www.gobilda.com/swingarm-odometry-pod-48mm-wheel/
-    protected final double ODO_WHEEL_DIAMETER_METERS = 0.048;
-    protected final double ENCODER_TICKS_PER_REV = 8192; // PPR for SRE Magnetic Encoder
+    protected final double ODO_WHEEL_DIAMETER_METERS = 0.048;//48 mm
+    protected final double ENCODER_TICKS_PER_REV = 2000; // PPR for SRE Magnetic Encoder
     //correction factor
     protected final double DISTANCE_CORRECTION = 1.0204;
 
     // --- AUTO-CALCULATED CONSTANTS ---
     protected final double ODO_WHEEL_CIRCUMFERENCE = ODO_WHEEL_DIAMETER_METERS * Math.PI;
-    protected final double TICKS_PER_METER = (ENCODER_TICKS_PER_REV / ODO_WHEEL_CIRCUMFERENCE) * DISTANCE_CORRECTION;
+    protected final double TICKS_PER_METER = (ENCODER_TICKS_PER_REV / ODO_WHEEL_CIRCUMFERENCE);
 
 
     // PID Coefficients
-    protected double Kp = 0.3;  // Power: how fast it moves toward target
+    protected double Kp = 0.6;  // Power: how fast it moves toward target
     protected double Kd = 0; // Dampening: prevents shaking/overshoot
-    protected double Ki = 0; // Integral: handles friction at the very end
+    protected double Ki = 0.0015; // Integral: handles friction at the very end
 
     protected final double STEER_P = 0.02; // How aggressively it fixes its angle
-    protected final double MIN_POWER = 0.1; // Minimum power to overcome friction
+    protected final double MIN_POWER = 0.2; // Minimum power to overcome friction
 
     // --- HARDWARE ---
     protected DcMotor backLeft, backRight, frontLeft, frontRight;
     protected DcMotor leftOdo, rightOdo, centerOdo; // Deadwheels
     protected IMU imu;
+
+
 
     public abstract void runPath();
 
@@ -82,12 +85,14 @@ public abstract class AutoEngine extends LinearOpMode {
         double lastError = 0;
         double integral = 0;
 
+        final int maxError = 50;
+
         resetOdometry();
 
-        while (opModeIsActive() && Math.abs(error) > 50) {
+        while (opModeIsActive() && Math.abs(error) > maxError) {
             double currentPos = (leftOdo.getCurrentPosition() + rightOdo.getCurrentPosition()) / 2.0;
 
-            currentPos = currentPos * -1; // quick fix if the odometry pods are mounted backwards
+            currentPos = currentPos * -1; // if the odometry pods are mounted backwards
 
             error = targetTicks - currentPos;
 
@@ -164,13 +169,53 @@ public abstract class AutoEngine extends LinearOpMode {
     /**
      * REPLACED STRAFE: Turns to the angle, then drives forward.
      */
-    public void vectorMove(double meters, int heading) {
-        // Step 1: Turn to face the target heading
-        turnPID(heading);
+    public void strafePID(double targetMeters, int targetAngle) {
+        double targetTicks = targetMeters * TICKS_PER_METER;
+        double error = targetTicks;
+        double lastError = 0;
+        double integral = 0;
 
-        // Step 2: Drive forward in that direction
-        // We pass 'heading' to drivePID so it maintains that angle while driving
-        drivePID(meters, heading);
+        final int maxError = 50;
+
+        resetOdometry();
+
+        while (opModeIsActive() && Math.abs(error) > maxError) {
+            double currentPos = (leftOdo.getCurrentPosition() + rightOdo.getCurrentPosition()) / 2.0;
+
+            currentPos = currentPos * -1; // if the odometry pods are mounted backwards
+
+            error = targetTicks - currentPos;
+
+            // PID Logic
+            double derivative = error - lastError;
+            integral += error;
+
+            // Anti-windup cap
+            if (Math.abs(error) < (0.1 * TICKS_PER_METER)) { // Only use Integral when close
+                integral = Math.max(-20, Math.min(20, integral));
+            } else {
+                integral = 0;
+            }
+
+            double power = (Kp * (error / TICKS_PER_METER)) + (Ki * integral) + (Kd * derivative);
+
+            // Steering with Angle Wrap
+            double currentYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            double steer = angleWrap(currentYaw - targetAngle) * -STEER_P;
+
+            power = Math.max(-0.7, Math.min(0.7, power));
+            if (Math.abs(power) < MIN_POWER) power = Math.signum(power) * MIN_POWER;
+
+            applyDrivePower(power, steer);
+            lastError = error;
+
+            telemetry.addData("Target Ticks", targetTicks);
+            telemetry.addData("Current Pos", currentPos);
+            telemetry.addData("Error", error);
+            telemetry.update();
+
+        }
+        stopRobot();
     }
 
     /**
@@ -265,4 +310,5 @@ public abstract class AutoEngine extends LinearOpMode {
         while (degrees < -180) degrees += 360;
         return degrees;
     }
+
 }
