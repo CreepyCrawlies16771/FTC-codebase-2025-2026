@@ -9,6 +9,9 @@ public class AutoTest extends AutoEngine {
 
     @Override
     public void runPath() {
-        strafeMove(1,0);
+        strafePID(3, 0);
+        strafePID(-1, 0);
+        drivePID(-1, 0);
+        drivePID(1, 0);
     }
 }

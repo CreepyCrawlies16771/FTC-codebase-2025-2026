@@ -75,7 +75,7 @@ public class Robot {
     }
     public void activateGobbler(boolean gooble) { //Feature not a bug!
         if (gooble) {
-            gobbler.setPower(1);
+            gobbler.setPower(-1);
         } else {
             gobbler.setPower(0);
         }

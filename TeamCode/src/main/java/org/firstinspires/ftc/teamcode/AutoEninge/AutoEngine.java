@@ -29,6 +29,10 @@ public abstract class AutoEngine extends LinearOpMode {
     protected double Kd = 0; // Dampening: prevents shaking/overshoot
     protected double Ki = 0.0015; // Integral: handles friction at the very end
 
+    protected double strafe_Kp = 0.8;
+    protected double strafe_Kd = 0;
+    protected double strafe_Ki = 0.0015;
+
     protected final double STEER_P = 0.02; // How aggressively it fixes its angle
     protected final double MIN_POWER = 0.2; // Minimum power to overcome friction
 
@@ -90,7 +94,7 @@ public abstract class AutoEngine extends LinearOpMode {
         resetOdometry();
 
         while (opModeIsActive() && Math.abs(error) > maxError) {
-            double currentPos = (leftOdo.getCurrentPosition() + rightOdo.getCurrentPosition()) / 2.0;
+            double currentPos = (leftOdo.getCurrentPosition() + rightOdo.getCurrentPosition()) / 2.0; //Devide by two is for the average between the two odometry pods
 
             currentPos = currentPos * -1; // if the odometry pods are mounted backwards
 
@@ -166,9 +170,6 @@ public abstract class AutoEngine extends LinearOpMode {
         stopRobot();
     }
 
-    /**
-     * REPLACED STRAFE: Turns to the angle, then drives forward.
-     */
     public void strafePID(double targetMeters, int targetAngle) {
         double targetTicks = targetMeters * TICKS_PER_METER;
         double error = targetTicks;
@@ -180,9 +181,9 @@ public abstract class AutoEngine extends LinearOpMode {
         resetOdometry();
 
         while (opModeIsActive() && Math.abs(error) > maxError) {
-            double currentPos = (leftOdo.getCurrentPosition() + rightOdo.getCurrentPosition()) / 2.0;
+            double currentPos =  centerOdo.getCurrentPosition();
 
-            currentPos = currentPos * -1; // if the odometry pods are mounted backwards
+            //currentPos = currentPos * -1; // if the odometry pods are mounted backwards
 
             error = targetTicks - currentPos;
 
@@ -197,16 +198,16 @@ public abstract class AutoEngine extends LinearOpMode {
                 integral = 0;
             }
 
-            double power = (Kp * (error / TICKS_PER_METER)) + (Ki * integral) + (Kd * derivative);
+            double power = (strafe_Kp * (error / TICKS_PER_METER)) + (strafe_Ki * integral) + (strafe_Kd * derivative);
 
             // Steering with Angle Wrap
-            double currentYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            double currentYaw = -imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
             double steer = angleWrap(currentYaw - targetAngle) * -STEER_P;
 
             power = Math.max(-0.7, Math.min(0.7, power));
             if (Math.abs(power) < MIN_POWER) power = Math.signum(power) * MIN_POWER;
 
-            applyDrivePower(power, steer);
+            applyStrafePower(power, steer);
             lastError = error;
 
             telemetry.addData("Target Ticks", targetTicks);
@@ -281,6 +282,31 @@ public abstract class AutoEngine extends LinearOpMode {
         frontLeft.setPower(0);
         frontRight.setPower(0);
         sleep(150); // Small pause for stability
+    }
+
+    public void applyStrafePower(double strafe, double steer) {
+        // Mecanum Strafe Pattern:
+        // FrontLeft and BackRight go one way
+        // FrontRight and BackLeft go the other way
+        double fl =  strafe + steer;
+        double fr = -strafe - steer;
+        double bl = -strafe + steer;
+        double br =  strafe - steer;
+
+        // Normalize power so no motor exceeds 1.0
+        double max = Math.max(Math.abs(fl), Math.max(Math.abs(fr),
+                Math.max(Math.abs(bl), Math.abs(br))));
+        if (max > 1.0) {
+            fl /= max;
+            fr /= max;
+            bl /= max;
+            br /= max;
+        }
+
+        frontLeft.setPower(fl);
+        frontRight.setPower(fr);
+        backLeft.setPower(bl);
+        backRight.setPower(br);
     }
 
     private void resetOdometry() {
