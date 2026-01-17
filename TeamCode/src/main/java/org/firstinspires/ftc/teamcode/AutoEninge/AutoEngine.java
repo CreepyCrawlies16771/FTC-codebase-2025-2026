@@ -44,8 +44,8 @@ public abstract class AutoEngine extends LinearOpMode {
 
     private double aSide = 0;
     // Initialized to 1.0 to prevent divide-by-zero errors in the first calculation step
-    private double bSide = 1.0;
-    private final double cSide = 1500; // millimeters
+    private double bSide = 0;
+    private final double cSide = 150; // centi meter
 
     public abstract void runPath();
 
@@ -88,7 +88,7 @@ public abstract class AutoEngine extends LinearOpMode {
 
     // Fixed: Now inside AutoEngine, so it can access drivePID and turnPID directly
     public void moveToShoot(Team team) {
-
+        aprilTagWebcam.update();
         if(aprilTagWebcam.getDetectedTags() == null) return;
         if (team == Team.BLUE) {
             findData(team);
@@ -99,21 +99,37 @@ public abstract class AutoEngine extends LinearOpMode {
             calculateAlpha();   // Calculate final alignment
 
             // First turn towards the target position
-            double firstTurnAngle = (theta + gamma) ;
+            double firstTurnAngle = (-theta + gamma);
 
             // Drive the distance (converted to meters)
-//            turnPID((int) firstTurnAngle);
-            drivePID((bSide / 1000.0) * -1, ((int) firstTurnAngle * -1));
+           turnPID((int) -firstTurnAngle);
+
+
+           drivePID(-(bSide / 100)/*convert to meters */, ((int) -firstTurnAngle));
 
             // Turn to the final shooting orientation
             double secondAngleTurn = 180 - alpha;
-            turnPID((int) secondAngleTurn);
+           turnPID((int) secondAngleTurn);
+
+            telemetry.addData("turning Status", "completed");
+            telemetry.addData("firstTurnAngle", firstTurnAngle);
+            telemetry.addData("second angle", secondAngleTurn);
+            telemetry.addData("Bearing", theta);
+            telemetry.addData("Gamma", gamma);
+            telemetry.addData("Alpha", alpha);
+            telemetry.addData("Beta", beta);
+            telemetry.addData("B side", bSide);
+            telemetry.addData("A side", aSide);
+            telemetry.addData("C side", cSide);
+
+            telemetry.update();
         }
 
         aprilTagWebcam.close();
     }
 
     void findData(Team team) {
+        aprilTagWebcam.update();
         aSide = aprilTagWebcam.getAngle(aprilTagWebcam.getTagBySpecificId(team.getTeamAprilTagID()), Rotation.RANGE);
         beta = aprilTagWebcam.getAngle(aprilTagWebcam.getTagBySpecificId(team.getTeamAprilTagID()), Rotation.YAW);
         theta = aprilTagWebcam.getAngle(aprilTagWebcam.getTagBySpecificId(team.getTeamAprilTagID()), Rotation.BEARING);

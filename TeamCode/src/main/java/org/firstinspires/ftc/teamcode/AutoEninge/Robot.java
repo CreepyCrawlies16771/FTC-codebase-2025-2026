@@ -47,6 +47,7 @@ public class Robot {
 
         indexer = hwMap.get(DcMotor.class, "indexer");
         gobbler = hwMap.get(DcMotor.class, "gobbler");
+        gobbler.setDirection(DcMotorSimple.Direction.REVERSE);
 
        // ballColorSensor = hwMap.get(ColorSensor.class , "ballCSensor");
 

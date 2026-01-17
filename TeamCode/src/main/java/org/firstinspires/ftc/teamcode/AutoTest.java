@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.Vision.AprilTagWebcam;
 public class AutoTest extends AutoEngine {
     @Override
     public void runPath() {
+
         moveToShoot(Team.BLUE);
 
 
