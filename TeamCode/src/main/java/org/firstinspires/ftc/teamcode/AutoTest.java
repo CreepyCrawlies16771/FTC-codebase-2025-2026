@@ -11,8 +11,12 @@ public class AutoTest extends AutoEngine {
     @Override
     public void runPath() {
 
+        drivePID(3.5, 80);
+        turnPID(95);
         moveToShoot(Team.BLUE);
 
+        arc(4, 0.6, t -> t
+                .at(0.3, 10));
 
     }
 }
