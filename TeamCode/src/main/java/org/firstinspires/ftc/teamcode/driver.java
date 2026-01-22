@@ -25,6 +25,10 @@ public class driver extends OpMode{
 
         boolean shootSequenceOn = false;
 
+        boolean cycleIndexerGobbleOn = false;
+
+        boolean readyForNextStep = false;
+
     AprilTagWebcam aprilTagWebcam = new AprilTagWebcam();
 
         Robot robot;
@@ -80,6 +84,17 @@ public class driver extends OpMode{
                     throw new RuntimeException(e);
                 }
             }
+
+            cycleIndexerGobbleOn = gamepad2.dpad_up;
+            if(cycleIndexerGobbleOn){
+                try {
+                    robot.cycleIndexer();
+                    cycleIndexerGobbleOn = false;
+                }  catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
 
 
 

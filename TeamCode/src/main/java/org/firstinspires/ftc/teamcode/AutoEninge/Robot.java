@@ -28,6 +28,8 @@ public class Robot {
 
     IMU imu;
 
+    int counter = 0;
+
     volatile boolean pleaseWait = false;
 
     int TICKS_PER_REV_COREHEX = 288;
@@ -50,6 +52,8 @@ public class Robot {
         indexer = hwMap.get(DcMotor.class, "indexer");
         gobbler = hwMap.get(DcMotor.class, "gobbler");
         gobbler.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        indexer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         ballColorSensor = hwMap.get(ColorSensor.class , "colorSensor");
 
@@ -121,22 +125,22 @@ public class Robot {
         this.drive(newForward, newStrafe, rotate);
     }
 
-    public void rotateByAngle(DcMotorEx motor, double angle, double power) throws InterruptedException {
-        int targetTicks = (int) ((angle / 360.0) * TICKS_PER_REV_COREHEX);
-        int newTarget = motor.getCurrentPosition() + targetTicks;
+    public void rotateIndexer(IndexerRotation direction) throws InterruptedException {
 
-        motor.setTargetPosition(newTarget);
-        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor.setPower(Math.abs(power));
-
-       sleep(800);
-        // Now that the loop is finished, it's safe to stop
-        motor.setPower(0);
-        motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        if (direction == IndexerRotation.COUNTERCLOCKWISE){
+            indexer.setPower(-1);
+            sleep(750);
+            indexer.setPower(0);
+        }
+        else {
+            indexer.setPower(1);
+            sleep(750);
+            indexer.setPower(0);
+        }
     }
     public void shootSequence() throws InterruptedException {
 
-
+        //ODER: Mite links rechts
         activateShooters(false);
         sleep(1000);
         for(int i = 0; i < 3; i++) {
@@ -144,7 +148,7 @@ public class Robot {
             sleep(1000);
             lifter.setPosition(1);
             sleep(500);
-            rotateByAngle((DcMotorEx) indexer, -120, 0.6);
+            rotateIndexer(IndexerRotation.COUNTERCLOCKWISE);
             sleep(1000);
 
 
@@ -154,6 +158,11 @@ public class Robot {
 
 
         activateShooters(true);
+    }
+
+    public void cycleIndexer() throws InterruptedException {
+        rotateIndexer(IndexerRotation.COUNTERCLOCKWISE);
+        sleep(1000);
     }
 
 }
