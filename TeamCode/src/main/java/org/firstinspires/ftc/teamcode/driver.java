@@ -64,7 +64,8 @@ public class driver extends OpMode{
             double strafe = gamepad1.left_stick_x;
             double rotate = gamepad1.right_stick_x;
 
-//            robot.drive(forwards, strafe, rotate);
+            telemetry.addData("Alpha", robot.ballColorSensor.alpha());
+
             shootOn = gamepad2.right_bumper;
             robot.activateShooters(!shootOn);
 
@@ -95,11 +96,14 @@ public class driver extends OpMode{
                 }
             }
 
-
-
-
+            telemetry.addLine("Christian likes feet");
+            telemetry.update();
         }
-
-
+    private void hapticFeedbackGamepad(int gamePad) {
+        if(gamePad == 1) {
+            gamepad1.rumble(500);
+        }
     }
+
+}
 

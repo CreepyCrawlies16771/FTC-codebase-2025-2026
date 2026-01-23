@@ -22,17 +22,15 @@ public class Robot {
 
     DcMotor indexer, gobbler;
 
-    ColorSensor ballColorSensor;
+    public ColorSensor ballColorSensor;
 
     Servo lifter;
 
-    IMU imu;
+    public IMU imu;
 
     int counter = 0;
 
-    volatile boolean pleaseWait = false;
-
-    int TICKS_PER_REV_COREHEX = 288;
+    private static int alphaThreshold = 0;
 
     public Robot(HardwareMap hwMap) {
         frontLeft = hwMap.get(DcMotor.class , "frontLeft");
@@ -128,12 +126,12 @@ public class Robot {
     public void rotateIndexer(IndexerRotation direction) throws InterruptedException {
 
         if (direction == IndexerRotation.COUNTERCLOCKWISE){
-            indexer.setPower(-1);
+            indexer.setPower(-0.25);
             sleep(750);
             indexer.setPower(0);
         }
         else {
-            indexer.setPower(1);
+            indexer.setPower(0.25);
             sleep(750);
             indexer.setPower(0);
         }
@@ -143,26 +141,44 @@ public class Robot {
         //ODER: Mite links rechts
         activateShooters(false);
         sleep(1000);
-        for(int i = 0; i < 3; i++) {
-            lifter.setPosition(-0.8);
-            sleep(1000);
-            lifter.setPosition(1);
-            sleep(500);
-            rotateIndexer(IndexerRotation.COUNTERCLOCKWISE);
-            sleep(1000);
+
+        lifter.setPosition(-0.6);
+        sleep(500);
+        lifter.setPosition(1);
+        sleep(500);
+
+        rotateIndexer(IndexerRotation.CLOCKWISE);
+
+        lifter.setPosition(-0.8);
+        sleep(500);
+        lifter.setPosition(1);
+        sleep(500);
+
+        rotateIndexer(IndexerRotation.CLOCKWISE);
+
+        lifter.setPosition(-0.6);
+        sleep(500);
+        lifter.setPosition(1);
+        sleep(500);
 
 
-        }
-
+        activateShooters(true);
 
 
 
         activateShooters(true);
+
+
     }
 
     public void cycleIndexer() throws InterruptedException {
         rotateIndexer(IndexerRotation.COUNTERCLOCKWISE);
         sleep(1000);
     }
+
+    public boolean isBallThere() {
+        return ballColorSensor.alpha() <= alphaThreshold;
+    }
+
 
 }
