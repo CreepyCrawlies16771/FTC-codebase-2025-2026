@@ -10,7 +10,6 @@ public class MovementTest extends MovementEngine {
     @Override
     public void runPath() throws InterruptedException {
 
-
         strafePID(1, 0);
         // Generated Path (robot-oriented)
         // Start: x=0.00 y=0.00 h=0.0deg
@@ -22,7 +21,7 @@ public class MovementTest extends MovementEngine {
 //        turnPID(36);
 //        drivePID(2.53, 36);
 //        turnPID(91); // waypoint heading
-//        moveToShoot(Team.BLUE);
+        moveToShoot(Team.BLUE);
 //        activateShooters();
 
 

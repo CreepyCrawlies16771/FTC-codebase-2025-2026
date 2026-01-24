@@ -2,7 +2,10 @@ package org.firstinspires.ftc.teamcode.AutoEninge;
 
 import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.Kp;
 import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.MIN_POWER;
+import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.STEER_P;
 import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.TICKS_PER_METER;
+import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.strafe_Kd;
+import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.strafe_Ki;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -33,8 +36,8 @@ public abstract class MovementEngine extends LinearOpMode {
         public static double Ki = 0;
 
         // FIXED: Set strafe coefficients to non-zero values
-        public static double strafe_Kp = 0.6;
-        public static double strafe_Ki = 0.0015;
+        public static double strafe_Kp = 1.85;
+        public static double strafe_Ki = 0.00015;
         public static double strafe_Kd = 0;
 
         public static final double STEER_P = 0.02;
@@ -89,7 +92,6 @@ public abstract class MovementEngine extends LinearOpMode {
 
         if (opModeIsActive()) {
             aprilTagWebcam.update();
-            telemetry.update();
             runPath();
         }
     }
@@ -102,17 +104,39 @@ public abstract class MovementEngine extends LinearOpMode {
         if(aprilTagWebcam.getDetectedTags() == null) return;
         if (team == Team.BLUE) {
             findData(team);
-            calculateBSide();
-            calculateGamma();
-            calculateAlpha();
 
+            // --- FIXED ORDER: Calculate side 'b' BEFORE angles gamma/alpha ---
+            calculateBSide();   // Calculate distance to drive first
+            calculateGamma();   // Calculate turn angle
+            calculateAlpha();   // Calculate final alignment
+
+            // First turn towards the target position
             double firstTurnAngle = (-theta + gamma);
-            turnPID((int) -firstTurnAngle);
-            drivePID(-(bSide / 100), ((int) -firstTurnAngle));
 
+            // Drive the distance (converted to meters)
+            turnPID((int) -firstTurnAngle);
+
+
+            drivePID(-(bSide / 100)/*convert to meters */, ((int) -firstTurnAngle));
+
+            // Turn to the final shooting orientation
             double secondAngleTurn = 180 - alpha;
             turnPID((int) secondAngleTurn);
+
+            telemetry.addData("turning Status", "completed");
+            telemetry.addData("firstTurnAngle", firstTurnAngle);
+            telemetry.addData("second angle", secondAngleTurn);
+            telemetry.addData("Bearing", theta);
+            telemetry.addData("Gamma", gamma);
+            telemetry.addData("Alpha", alpha);
+            telemetry.addData("Beta", beta);
+            telemetry.addData("B side", bSide);
+            telemetry.addData("A side", aSide);
+            telemetry.addData("C side", cSide);
+
+            telemetry.update();
         }
+
         aprilTagWebcam.close();
     }
 
@@ -188,7 +212,7 @@ public abstract class MovementEngine extends LinearOpMode {
 
             // Steering logic
             double currentYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-            double steer = angleWrap(targetAngle - currentYaw) * AutoEngineConfig.STEER_P;
+            double steer = angleWrap(targetAngle - currentYaw) * STEER_P;
 
             // Clamp power
             power = Math.max(-0.7, Math.min(0.7, power));
@@ -202,11 +226,10 @@ public abstract class MovementEngine extends LinearOpMode {
             lastError = error;
 
             // 4. TELEMETRY: Essential for seeing WHY it won't stop
-            telemetry.addData("Target Ticks", targetTicks);
-            telemetry.addData("Current Pos", currentPos);
-            telemetry.addData("Error", error);
-            telemetry.addData("Power", power);
-            telemetry.update();
+//            telemetry.addData("Target Ticks", targetTicks);
+//            telemetry.addData("Current Pos", currentPos);
+//            telemetry.addData("Error", error);
+//            telemetry.addData("Power", power);
         }
         stopRobot();
     }
@@ -222,26 +245,44 @@ public abstract class MovementEngine extends LinearOpMode {
         double lastError = 0;
         double integral = 0;
 
+        final int maxError = 50;
+
         resetOdometry();
 
-        while (opModeIsActive() && Math.abs(error) > 50) {
-            double currentPos = centerOdo.getCurrentPosition();
+        while (opModeIsActive() && Math.abs(error) > maxError) {
+            double currentPos =  centerOdo.getCurrentPosition();
+
+            //currentPos = currentPos * -1; // if the odometry pods are mounted backwards
+
             error = targetTicks - currentPos;
 
+            // PID Logic
             double derivative = error - lastError;
-            integral += (Math.abs(error) < (0.1 * TICKS_PER_METER)) ? error : 0;
+            integral += error;
 
-            double power = (AutoEngineConfig.strafe_Kp * (error / TICKS_PER_METER)) + (AutoEngineConfig.strafe_Ki * integral) + (AutoEngineConfig.strafe_Kd * derivative);
+            // Anti-windup cap
+            if (Math.abs(error) < (0.1 * TICKS_PER_METER)) { // Only use Integral when close
+                integral = Math.max(-20, Math.min(20, integral));
+            } else {
+                integral = 0;
+            }
 
-            // FIXED: Standardized steering to match drivePID
-            double currentYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-            double steer = angleWrap(targetAngle - currentYaw) * AutoEngineConfig.STEER_P;
+            double power = (AutoEngineConfig.strafe_Kp * (error / TICKS_PER_METER)) + (strafe_Ki * integral) + (strafe_Kd * derivative);
+
+            // Steering with Angle Wrap
+            double currentYaw = -imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            double steer = angleWrap(currentYaw - targetAngle) * -STEER_P;
 
             power = Math.max(-0.7, Math.min(0.7, power));
             if (Math.abs(power) < MIN_POWER) power = Math.signum(power) * MIN_POWER;
 
             applyStrafePower(power, steer);
             lastError = error;
+
+//            telemetry.addData("Target Ticks", targetTicks);
+//            telemetry.addData("Current Pos", currentPos);
+//            telemetry.addData("Error", error);
+
         }
         stopRobot();
     }
@@ -251,20 +292,32 @@ public abstract class MovementEngine extends LinearOpMode {
      * @param targetAngle angle to turn to in degrees*/
 
     public void turnPID(int targetAngle) {
+        // 1. Calculate error
         double currentYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         double error = angleWrap(targetAngle - currentYaw);
 
+        // 2. Loop until error is small (e.g., < 1 degree)
         while (opModeIsActive() && Math.abs(error) > 1.0) {
             currentYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
             error = angleWrap(targetAngle - currentYaw);
+
+            // Simple P-Control for turning
+            // We use a higher P value here because turning needs more punch than steering correction
             double turnPower = error * 0.03;
+
+            // Clamp power to avoid moving too fast or stalling
             turnPower = Math.max(-0.6, Math.min(0.6, turnPower));
             if (Math.abs(turnPower) < 0.15) turnPower = Math.signum(turnPower) * 0.15;
 
+            // Apply power (Turn Right = Left Forward, Right Back)
+            // Note: Check your motor directions!
             backLeft.setPower(-turnPower);
             frontLeft.setPower(-turnPower);
             backRight.setPower(turnPower);
             frontRight.setPower(turnPower);
+
+            telemetry.addData("Target", targetAngle);
+            telemetry.addData("Heading", currentYaw);
         }
         stopRobot();
     }
@@ -272,21 +325,31 @@ public abstract class MovementEngine extends LinearOpMode {
     // --- HELPERS ---
 
     private void applyDrivePower(double p, double s) {
-        backLeft.setPower(p - s);
-        backRight.setPower(p + s);
-        frontLeft.setPower(p - s);
-        frontRight.setPower(p + s);
+        // p = forward power, s = steer (turning)
+        frontLeft.setPower(p + s);
+        backLeft.setPower(p + s);
+        frontRight.setPower(p - s); // Right side must be opposite of Left
+        backRight.setPower(p - s); // Right side must be opposite of Left
     }
 
     public void applyStrafePower(double strafe, double steer) {
-        // FIXED: Re-mapped strafe powers to ensure lateral movement
-        double fl = strafe + steer;
+        // Mecanum Strafe Pattern:
+        // FrontLeft and BackRight go one way
+        // FrontRight and BackLeft go the other way
+        double fl =  strafe + steer;
         double fr = -strafe - steer;
         double bl = -strafe + steer;
-        double br = strafe - steer;
+        double br =  strafe - steer;
 
-        double max = Math.max(Math.abs(fl), Math.max(Math.abs(fr), Math.max(Math.abs(bl), Math.abs(br))));
-        if (max > 1.0) { fl /= max; fr /= max; bl /= max; br /= max; }
+        // Normalize power so no motor exceeds 1.0
+        double max = Math.max(Math.abs(fl), Math.max(Math.abs(fr),
+                Math.max(Math.abs(bl), Math.abs(br))));
+        if (max > 1.0) {
+            fl /= max;
+            fr /= max;
+            bl /= max;
+            br /= max;
+        }
 
         frontLeft.setPower(fl);
         frontRight.setPower(fr);

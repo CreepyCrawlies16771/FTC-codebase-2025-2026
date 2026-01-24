@@ -26,18 +26,17 @@ public class Driver extends MovementEngine {
                 aprilTagWebcam.displayDetectionTelemetry(id20);
             }
 
-            // 2. DRIVE TRAIN CONTROL (Gamepad 1)
-            double leftY = gamepad1.left_stick_y;
+            double leftY = gamepad1.left_stick_y * -1;
             double rightY = gamepad1.right_stick_y;
-            double leftX = gamepad1.left_stick_x;
+            double leftX = gamepad1.left_stick_x * -1;
             double rightX = gamepad1.right_stick_x;
 
-            // Manual driving
-            double fl = leftY + leftX;
-            double fr = rightY - rightX;
-            double bl = leftY - leftX;
-            double br = rightY + rightX;
-            robot.powerDriveTrain(fl, fr, bl, br);
+            double frontLeftPower = leftY + leftX;
+            double frontRightPower = rightY - rightX;
+            double backLeftPower = leftY - leftX;
+            double backRightPower = rightY + rightX;
+
+            robot.powerDriveTrain(-frontLeftPower, -frontRightPower, -backLeftPower, -backRightPower);
 
             // 3. AUTO-ALIGN TRIGGER (Gamepad 1 A)
             if (gamepad1.a && !lastAPress) {
@@ -54,11 +53,10 @@ public class Driver extends MovementEngine {
             robot.activateShooters(!shooterButtonHeld);
 
             // Gobbler (Toggle on Press)
-            if (gamepad2.left_bumper && !lastLeftBumper) {
+            if (gamepad2.left_bumper) {
                 gobbleOn = !gobbleOn;
                 robot.activateGobbler(gobbleOn);
             }
-            lastLeftBumper = gamepad2.left_bumper;
 
             // Shoot Sequence (Triangle)
             if (gamepad2.triangle) {
