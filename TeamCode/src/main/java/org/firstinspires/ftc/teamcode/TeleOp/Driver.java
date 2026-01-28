@@ -58,6 +58,12 @@ public class Driver extends MovementEngine {
                 robot.activateGobbler(gobbleOn);
             }
 
+            if(gamepad2.right_bumper) {
+                robot.activateShooters(true);
+            } else {
+                robot.activateShooters(false);
+            }
+
             // Shoot Sequence (Triangle)
             if (gamepad2.triangle) {
                 stop();

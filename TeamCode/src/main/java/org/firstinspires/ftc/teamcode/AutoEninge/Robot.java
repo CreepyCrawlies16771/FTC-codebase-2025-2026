@@ -73,8 +73,8 @@ public class Robot {
             shooterRight.setPower(0);
             shooterLeft.setPower(0);
         } else {
-            shooterLeft.setPower(0.48    );
-            shooterRight.setPower(-0.48);
+            shooterLeft.setPower(1);
+            shooterRight.setPower(1);
         }
     }
 
@@ -168,7 +168,7 @@ public class Robot {
         // Shot 1
         sleep(1500);
         lifter.setPosition(-0.8);
-        sleep(1000);
+        sleep(2000);
         lifter.setPosition(1);
         sleep(500);
 
@@ -178,7 +178,7 @@ public class Robot {
         // Shot 2
         sleep(1500);
         lifter.setPosition(-0.8);
-        sleep(1000);
+        sleep(2000);
         lifter.setPosition(1);
         sleep(500);
 
@@ -188,7 +188,7 @@ public class Robot {
         // Shot 3
         sleep(1500);
         lifter.setPosition(-0.8);
-        sleep(1000);
+        sleep(2000);
         lifter.setPosition(1);
         sleep(500);
 

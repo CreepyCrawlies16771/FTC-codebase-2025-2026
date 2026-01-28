@@ -75,6 +75,7 @@ public class driver extends OpMode{
             shootSequenceOn = gamepad2.triangle;
             if(shootSequenceOn){
                 try {
+                    
                     frontLeftPower = 0;
                     frontRightPower = 0;
                     backLeftPower = 0;
