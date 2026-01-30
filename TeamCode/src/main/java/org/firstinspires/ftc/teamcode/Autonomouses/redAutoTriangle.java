@@ -2,10 +2,10 @@ package org.firstinspires.ftc.teamcode.Autonomouses;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.AutoEninge.RobotOrient.MovementEngine;
+import org.firstinspires.ftc.teamcode.Crawler.RobotOrient.ROMovementEngine;
 
 @Autonomous(name="Red Second Auto")
-public class redAutoTriangle extends MovementEngine {
+public class redAutoTriangle extends ROMovementEngine {
 
     public void runPath() throws InterruptedException {
 

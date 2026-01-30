@@ -1,7 +1,8 @@
-package org.firstinspires.ftc.teamcode.AutoEninge.RobotOrient;
+package org.firstinspires.ftc.teamcode.Crawler;
 
 import static java.lang.Thread.sleep;
 
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,6 +12,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.Crawler.RobotOrient.IndexerRotation;
 
 public class Robot {
 
@@ -21,10 +23,13 @@ public class Robot {
 
     DcMotor frontRight , frontLeft, backRight, backLeft;
     DcMotor shooterLeft, shooterRight;
-    DcMotor indexer, gobbler;
+    public DcMotor indexer;
+    DcMotor gobbler;
+
+    public MotorEx leftEncoder, rightEncoder, centerEncoder;
 
     public ColorSensor ballColorSensor;
-    Servo lifter;
+    public Servo lifter;
     public IMU imu;
 
     int counter = 0;
@@ -38,10 +43,18 @@ public class Robot {
         backRight = hwMap.get(DcMotor.class, "backRight");
         backLeft = hwMap.get(DcMotor.class, "backLeft");
 
+        leftEncoder = (MotorEx) hwMap.get(DcMotor.class, RobotConfig.encodeLeftName);
+        rightEncoder = (MotorEx) hwMap.get(DcMotor.class, RobotConfig.encoderRightName);
+        centerEncoder = (MotorEx) hwMap.get(DcMotor.class, RobotConfig.encoderCenterName);
+
+        leftEncoder.setDistancePerPulse(RobotConfig.TICKS_PER_CM);
+        rightEncoder.setDistancePerPulse(RobotConfig.TICKS_PER_CM);
+        centerEncoder.setDistancePerPulse(RobotConfig.TICKS_PER_CM);
+
         shooterLeft = hwMap.get(DcMotor.class, "leftShoot");
         shooterRight = hwMap.get(DcMotor.class, "rightShoot");
 
-        shooterLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        shooterLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         shooterRight.setDirection(DcMotorSimple.Direction.FORWARD);
 
         shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

@@ -1,8 +1,10 @@
-package org.firstinspires.ftc.teamcode.AutoEninge.RobotOrient;
+package org.firstinspires.ftc.teamcode.Crawler.RobotOrient;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-@Deprecated
+import org.firstinspires.ftc.teamcode.Crawler.Robot;
+
+@Deprecated()
 public class Sorter {
 
     int tries = 3;
