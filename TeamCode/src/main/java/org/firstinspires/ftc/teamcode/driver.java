@@ -2,13 +2,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-import org.firstinspires.ftc.teamcode.AutoEninge.Robot;
+import org.firstinspires.ftc.teamcode.AutoEninge.RobotOrient.Robot;
 import org.firstinspires.ftc.teamcode.Vision.AprilTagWebcam;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.opencv.core.Mat;
 
 @TeleOp(name="Use ME! Driver")
 public class driver extends OpMode{
@@ -75,7 +72,7 @@ public class driver extends OpMode{
             shootSequenceOn = gamepad2.triangle;
             if(shootSequenceOn){
                 try {
-                    
+
                     frontLeftPower = 0;
                     frontRightPower = 0;
                     backLeftPower = 0;

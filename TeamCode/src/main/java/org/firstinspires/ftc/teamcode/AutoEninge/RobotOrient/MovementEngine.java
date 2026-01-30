@@ -1,13 +1,12 @@
-package org.firstinspires.ftc.teamcode.AutoEninge;
+package org.firstinspires.ftc.teamcode.AutoEninge.RobotOrient;
 
-import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.Kp;
-import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.MIN_POWER;
-import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.STEER_P;
-import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.TICKS_PER_METER;
-import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.strafe_Kd;
-import static org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine.AutoEngineConfig.strafe_Ki;
+import static org.firstinspires.ftc.teamcode.AutoEninge.RobotConfig.MIN_POWER;
+import static org.firstinspires.ftc.teamcode.AutoEninge.RobotConfig.STEER_P;
+import static org.firstinspires.ftc.teamcode.AutoEninge.RobotConfig.TICKS_PER_METER;
+import static org.firstinspires.ftc.teamcode.AutoEninge.RobotConfig.strafe_Kd;
+import static org.firstinspires.ftc.teamcode.AutoEninge.RobotConfig.strafe_Ki;
 
-import com.acmerobotics.dashboard.config.Config;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -15,37 +14,13 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.AutoEninge.RobotConfig;
 import org.firstinspires.ftc.teamcode.Vision.AprilTagWebcam;
 import org.firstinspires.ftc.teamcode.Vision.Rotation;
+import org.firstinspires.ftc.teamcode.annotations.Experimental;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 public abstract class MovementEngine extends LinearOpMode {
-
-    /**
-    * Internal configuration class, primarily to allow for simpler configuration
-    */
-    @Config
-    public static class AutoEngineConfig {
-        public static final double ODO_WHEEL_DIAMETER_METERS = 0.048;
-        public static final double ENCODER_TICKS_PER_REV = 2000;
-        public static final double ODO_WHEEL_CIRCUMFERENCE = ODO_WHEEL_DIAMETER_METERS * Math.PI;
-        public static final double TICKS_PER_METER = (ENCODER_TICKS_PER_REV / ODO_WHEEL_CIRCUMFERENCE);
-
-        public static double Kp = 0.6;
-        public static double Kd = 0;
-        public static double Ki = 0;
-
-        // FIXED: Set strafe coefficients to non-zero values
-        public static double strafe_Kp = 1.85;
-        public static double strafe_Ki = 0.00015;
-        public static double strafe_Kd = 0;
-
-        public static final double STEER_P = 0.02;
-        public static final double MIN_POWER = 0.1;
-
-        public static double timeoutSecs = 4;
-    }
-
     protected DcMotor backLeft, backRight, frontLeft, frontRight;
     protected DcMotor leftOdo, rightOdo, centerOdo;
     protected IMU imu;
@@ -164,7 +139,6 @@ public abstract class MovementEngine extends LinearOpMode {
 
     private void calculateAlpha() { alpha = 180 - (theta + gamma); }
 
-    public void activateShooters() throws InterruptedException {robot.shootSequence();}
 
     /**
      * Move the robot forward while using a pid/gyro correction
@@ -186,7 +160,7 @@ public abstract class MovementEngine extends LinearOpMode {
         ElapsedTime timer = new ElapsedTime();
         timer.reset();
 
-        while (opModeIsActive() && (timer.seconds() < AutoEngineConfig.timeoutSecs) && Math.abs(error) > 50) {
+        while (opModeIsActive() && (timer.seconds() < RobotConfig.timeoutSecs) && Math.abs(error) > 50) {
 
             // Calculate current distance traveled relative to start
             double rawCurrentPos = ((leftOdo.getCurrentPosition() + rightOdo.getCurrentPosition()) / 2.0) * -1;
@@ -206,20 +180,20 @@ public abstract class MovementEngine extends LinearOpMode {
                 integral = 0;
             }
 
-            double power = (AutoEngineConfig.Kp * (error / TICKS_PER_METER))
-                    + (AutoEngineConfig.Ki * integral)
-                    + (AutoEngineConfig.Kd * derivative);
+            double power = (RobotConfig.Kp * (error / TICKS_PER_METER))
+                    + (RobotConfig.Ki * integral)
+                    + (RobotConfig.Kd * derivative);
 
             // Steering logic
             double currentYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-            double steer = angleWrap(targetAngle - currentYaw) * AutoEngineConfig.STEER_P;
+            double steer = angleWrap(targetAngle - currentYaw) * STEER_P;
 
             // Clamp power
             power = Math.max(-0.7, Math.min(0.7, power));
 
             // Feedforward / Minimum power to overcome friction
-            if (Math.abs(power) < AutoEngineConfig.MIN_POWER && Math.abs(error) > 50) {
-                power = Math.signum(power) * AutoEngineConfig.MIN_POWER;
+            if (Math.abs(power) < MIN_POWER && Math.abs(error) > 50) {
+                power = Math.signum(power) * MIN_POWER;
             }
 
             applyDrivePower(power, -steer);
@@ -269,7 +243,7 @@ public abstract class MovementEngine extends LinearOpMode {
                 integral = 0;
             }
 
-            double power = (AutoEngineConfig.strafe_Kp * (error / TICKS_PER_METER)) + (strafe_Ki * integral) + (strafe_Kd * derivative);
+            double power = (RobotConfig.strafe_Kp * (error / TICKS_PER_METER)) + (strafe_Ki * integral) + (strafe_Kd * derivative);
 
             // Steering with Angle Wrap
             double currentYaw = -imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
@@ -281,9 +255,6 @@ public abstract class MovementEngine extends LinearOpMode {
             applyStrafePower(power, steer);
             lastError = error;
 
-//            telemetry.addData("Target Ticks", targetTicks);
-//            telemetry.addData("Current Pos", currentPos);
-//            telemetry.addData("Error", error);
 
         }
         stopRobot();
@@ -320,6 +291,47 @@ public abstract class MovementEngine extends LinearOpMode {
 
             telemetry.addData("Target", targetAngle);
             telemetry.addData("Heading", currentYaw);
+        }
+        stopRobot();
+    }
+
+    @Experimental("This is only a prototype, may be removed/moved to new pure pursuit algorithm")
+    public void arc(double meters, double maxPower, AnimationBuilder animator) {
+        double targetTicks = meters * TICKS_PER_METER;
+        double startHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+
+        // 1. Setup the Timeline
+        HeadingTimeline timeline = new HeadingTimeline();
+        animator.build(timeline); // Execute the user's instructions
+
+        resetOdometry();
+
+        while (opModeIsActive()) {
+            double currentPos = (leftOdo.getCurrentPosition() + rightOdo.getCurrentPosition()) / 2.0;
+
+            // Calculate Progress (0.0 to 1.0)
+            double progress = Math.abs(currentPos / targetTicks);
+            if (progress >= 1.0) break;
+
+            // 2. ASK THE TIMELINE FOR HEADING
+            double targetHeading = timeline.getTarget(progress, startHeading);
+
+            // Standard Drive Logic
+            double error = Math.abs(targetTicks) - Math.abs(currentPos);
+            double power = (RobotConfig.Kp * (error / TICKS_PER_METER));
+
+            power = Math.max(-maxPower, Math.min(maxPower, power));
+            if (Math.abs(power) < MIN_POWER) power = Math.signum(power) * MIN_POWER;
+
+            double currentYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            double steer = angleWrap(currentYaw - targetHeading) * -STEER_P;
+
+            applyDrivePower(power, steer);
+
+            // Telemetry for debugging
+            telemetry.addData("Progress", "%.2f", progress);
+            telemetry.addData("Target Head", "%.1f", targetHeading);
+            telemetry.update();
         }
         stopRobot();
     }

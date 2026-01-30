@@ -1,8 +1,8 @@
 package org.firstinspires.ftc.teamcode.TeleOp;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.teamcode.AutoEninge.MovementEngine;
-import org.firstinspires.ftc.teamcode.AutoEninge.Team;
+import org.firstinspires.ftc.teamcode.AutoEninge.RobotOrient.MovementEngine;
+import org.firstinspires.ftc.teamcode.AutoEninge.RobotOrient.Team;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 @TeleOp(name="Use ME! Driver (MovementEngine)")
