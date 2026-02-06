@@ -4,12 +4,14 @@ import static java.lang.Thread.sleep;
 
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Crawler.RobotOrient.IndexerRotation;
@@ -158,10 +160,47 @@ public class Robot {
         indexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         indexer.setPower(0.5); // Set speed
 
-        // Wait until motor is done moving
-        while (indexer.isBusy()) {
-            // efficient wait
+        //new failsafe for if the indexer gets stuck
 
+        ElapsedTime timer = new ElapsedTime();
+        timer.reset();
+        double timeoutSeconds = 3.0; // Stop trying after 3 seconds, adjust value if needed
+
+        // The loop runs ONLY while the motor is busy AND we haven't hit the time limit
+        while (indexer.isBusy() && timer.seconds() < timeoutSeconds) {
+            // Just waiting for the motor to reach position or time to run out
+        }
+
+        // 2. CHECK: Did we timeout?
+        if (timer.seconds() >= 3.0) {
+            // --- UNSTUCK ROUTINE ---
+
+            // Step A: Full speed burst for 1.5 seconds
+            indexer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            indexer.setPower(1.0);
+
+            ElapsedTime recoveryTimer = new ElapsedTime();
+            recoveryTimer.reset();
+            while(recoveryTimer.seconds() < 1.5) {
+                // Brute force turning to clear the jam
+            }
+            indexer.setPower(0);
+
+            // Step B: Realign to home (make sure your realignIndexer also has a timeout!)
+            realignIndexer();
+
+            // Step C: Rotate 60 degrees to align with shooter
+            // We call rotateIndexer again, but with a smaller angle
+            // Note: Using a smaller degrees here to avoid infinite recursion if it jams again
+            int alignTicks = (int) (60 * COUNTS_PER_DEGREE);
+            indexer.setTargetPosition(indexer.getCurrentPosition() + alignTicks);
+            indexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            indexer.setPower(0.5);
+
+            // Small final wait for the 60-degree adjustment
+            ElapsedTime finalTimer = new ElapsedTime();
+            finalTimer.reset();
+            while(indexer.isBusy() && finalTimer.seconds() < 1.0);
         }
 
         indexer.setPower(0);
@@ -221,14 +260,25 @@ public class Robot {
         indexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         indexer.setPower(0.8); // Use higher power to ensure it snaps back firmly
 
-        // Wait for it to get there
-        while (indexer.isBusy()) {
-            // waiting...
+
+
+        //new failsafe for if the indexer gets stuck
+
+        ElapsedTime timer = new ElapsedTime();
+        timer.reset();
+        double timeoutSeconds = 5.0; // Stop trying after 3 seconds, adjust value if needed
+
+        // The loop runs ONLY while the motor is busy AND we haven't hit the time limit
+        while (indexer.isBusy() && timer.seconds() < timeoutSeconds) {
+            // Just waiting for the motor to reach position or time to run out
         }
 
-        // OPTIONAL: Keep the motor powered to Hold position
-        // If you set power to 0, it might slip again.
-        // Leaving it in RUN_TO_POSITION with power holds it stiff.
+        // If we hit the 5-second limit, the motor might be jammed
+        if (timer.seconds() >= 5.0) {
+            // Optional: Add a small "jerk" to dislodge any still stuck balls
+            indexer.setPower(0);
+        }
+
         indexer.setPower(0);
         indexer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
