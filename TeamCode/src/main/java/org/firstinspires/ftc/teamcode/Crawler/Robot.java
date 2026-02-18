@@ -45,6 +45,9 @@ public class Robot {
     private int targetPositionTicks = 0;
     private static int alphaThreshold = 0;
 
+    // Thread for non-blocking indexer rotation
+    private Thread indexerThread = null;
+
     public Robot(HardwareMap hwMap) {
         frontLeft = hwMap.get(DcMotor.class, "frontLeft");
         frontRight = hwMap.get(DcMotor.class, "frontRight");
@@ -110,6 +113,13 @@ public class Robot {
         }
     }
 
+    public void stopDrive() {
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        backLeft.setPower(0);
+        backRight.setPower(0);
+    }
+
     public void drive(double forward, double strafe, double rotate) {
         double frontLeftPower = forward + strafe + rotate;
         double backLeftPower = forward - strafe + rotate;
@@ -150,38 +160,63 @@ public class Robot {
             targetPositionTicks -= tickMovement;
         }
 
-        indexer.setTargetPosition(targetPositionTicks);
-        indexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        indexer.setPower(0.4); // Lower power to reduce bouncing/slop
-
-        ElapsedTime timer = new ElapsedTime();
-        timer.reset();
-        double timeoutSeconds = 3.0;
-
-        while (indexer.isBusy() && timer.seconds() < timeoutSeconds) {
-            // Waiting for motor
+        // Start indexer rotation in a background thread so robot can still move
+        if (indexerThread != null && indexerThread.isAlive()) {
+            try {
+                indexerThread.join(); // Wait for previous rotation to complete
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
 
-        // --- JAM RECOVERY ---
-        if (timer.seconds() >= timeoutSeconds) {
-            gobbler.setPower(1.0);
-            indexer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            indexer.setPower(0.5); // Reverse briefly
-
-            ElapsedTime recoveryTimer = new ElapsedTime();
-            while (recoveryTimer.seconds() < 0.5);
-
-            gobbler.setPower(0);
+        indexerThread = new Thread(() -> {
             indexer.setTargetPosition(targetPositionTicks);
             indexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            indexer.setPower(0.4);
+            indexer.setPower(0.4); // Lower power to reduce bouncing/slop
 
-            ElapsedTime finalTimer = new ElapsedTime();
-            while (indexer.isBusy() && finalTimer.seconds() < 1.0);
-        }
+            ElapsedTime timer = new ElapsedTime();
+            timer.reset();
+            double timeoutSeconds = 3.0;
 
-        indexer.setPower(0);
-        indexer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            while (indexer.isBusy() && timer.seconds() < timeoutSeconds) {
+                // Waiting for motor
+            }
+
+            // --- JAM RECOVERY ---
+            if (timer.seconds() >= timeoutSeconds) {
+                gobbler.setPower(1.0);
+                indexer.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                indexer.setPower(0.5); // Reverse briefly
+
+                ElapsedTime recoveryTimer = new ElapsedTime();
+                while (recoveryTimer.seconds() < 0.5) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+
+                gobbler.setPower(0);
+                indexer.setTargetPosition(targetPositionTicks);
+                indexer.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                indexer.setPower(0.4);
+
+                ElapsedTime finalTimer = new ElapsedTime();
+                while (indexer.isBusy() && finalTimer.seconds() < 1.0) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+
+            indexer.setPower(0);
+            indexer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        });
+
+        indexerThread.start();
     }
 
     public void shootSequence() throws InterruptedException {

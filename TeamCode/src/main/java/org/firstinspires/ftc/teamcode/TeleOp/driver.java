@@ -72,11 +72,6 @@ public class driver extends OpMode{
             shootSequenceOn = gamepad2.triangle;
             if(shootSequenceOn){
                 try {
-
-                    frontLeftPower = 0;
-                    frontRightPower = 0;
-                    backLeftPower = 0;
-                    backRightPower = 0;
                     robot.shootSequence();
                     shootSequenceOn = false;
                 } catch (InterruptedException e) {
@@ -87,6 +82,7 @@ public class driver extends OpMode{
             cycleIndexerGobbleOn = gamepad2.dpad_up;
             if(cycleIndexerGobbleOn){
                 try {
+                    robot.stopDrive();
                     robot.cycleIndexer();
                     cycleIndexerGobbleOn = false;
                 }  catch (InterruptedException e) {
