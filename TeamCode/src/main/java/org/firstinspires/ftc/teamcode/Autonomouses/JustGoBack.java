@@ -4,12 +4,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.Crawler.RobotOrient.ROMovementEngine;
 
-
-@Autonomous(name="Just go straight")
-public class EasyAuto extends ROMovementEngine {
-
-    public void runPath() {
-        drivePID(1,0);
-        strafePID(1, 0);
+@Autonomous
+public class JustGoBack extends ROMovementEngine {
+    @Override
+    public void runPath() throws InterruptedException {
+        drivePID(0.5, 0);
     }
 }

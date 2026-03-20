@@ -37,7 +37,7 @@ public class RobotConfig {
         public static double timeoutSecs = 4;
 
         // These will now show up!
-        public static double maxShooterSpeed = 0.50;
+        public static double maxShooterSpeed = 1;
         public static double maxGobblerSpeed = 1;
 
         public static double ODO_WHEEL_DIAMETER_METERS = 0.048;

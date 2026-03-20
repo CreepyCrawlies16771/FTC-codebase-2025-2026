@@ -303,7 +303,7 @@ public abstract class ROMovementEngine extends LinearOpMode {
         stopRobot();
     }
 
-    @Experimental("Might be removed, and not as accurate as the rest")
+    @Experimental("PID, accuracy not copley done, not as accurate as the rest")
     public void arc(double meters, double maxPower, AnimationBuilder animator) {
         double targetTicks = meters * RobotConfig.RobotBase.TICKS_PER_METER;
         if (Math.abs(targetTicks) < 10) return;
