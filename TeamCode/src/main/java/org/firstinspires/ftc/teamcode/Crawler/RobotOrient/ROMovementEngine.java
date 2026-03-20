@@ -44,10 +44,7 @@ public abstract class ROMovementEngine extends LinearOpMode {
         backRight = hardwareMap.get(DcMotor.class, "backRight");
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
         frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
-        frontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
-        backLeft.setDirection(DcMotorSimple.Direction.FORWARD);
-        backRight.setDirection(DcMotorSimple.Direction.FORWARD);
+
 
         leftOdo = hardwareMap.get(DcMotor.class, "frontLeft");
         rightOdo = hardwareMap.get(DcMotor.class, "backRight");
@@ -97,19 +94,6 @@ public abstract class ROMovementEngine extends LinearOpMode {
             // Turn to the final shooting orientation
             double secondAngleTurn = 180 - alpha;
             turnPID((int) secondAngleTurn);
-
-            telemetry.addData("turning Status", "completed");
-            telemetry.addData("firstTurnAngle", firstTurnAngle);
-            telemetry.addData("second angle", secondAngleTurn);
-            telemetry.addData("Bearing", theta);
-            telemetry.addData("Gamma", gamma);
-            telemetry.addData("Alpha", alpha);
-            telemetry.addData("Beta", beta);
-            telemetry.addData("B side", bSide);
-            telemetry.addData("A side", aSide);
-            telemetry.addData("C side", cSide);
-
-            telemetry.update();
         }
 
         aprilTagWebcam.close();
@@ -228,7 +212,6 @@ public abstract class ROMovementEngine extends LinearOpMode {
 
         final int maxError = 50;
 
-        resetOdometry();
 
         while (opModeIsActive() && Math.abs(error) > maxError) {
             double currentPos =  centerOdo.getCurrentPosition();
@@ -423,4 +406,5 @@ public abstract class ROMovementEngine extends LinearOpMode {
         while (degrees < -180) degrees += 360;
         return degrees;
     }
+
 }

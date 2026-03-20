@@ -28,7 +28,7 @@ public class RobotConfig {
         public static double strafe_Kd = 0;
 
         // REMOVED 'final' here
-        public static final double STEER_P = 0.02;
+        public static double STEER_P = 0.02;
         public static final double MIN_POWER = 0.1;
     }
 
@@ -50,5 +50,7 @@ public class RobotConfig {
         public static final double TICKS_PER_METER = (ENCODER_TICKS_PER_REV / ODO_WHEEL_CIRCUMFERENCE);
         public static final double TICKS_PER_CM = TICKS_PER_METER * 100;
     }
+
+
 
 }
